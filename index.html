@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Blue Red Eye: Candide Takes the 7</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="titleScreen" class="screen title-screen active" aria-labelledby="gameTitle">
+        <div class="title-copy">
+          <p class="kicker">Penn Station to Citi Field, somehow</p>
+          <h1 id="gameTitle">Blue Red Eye: Candide Takes the 7</h1>
+          <p class="subtitle">A split-letter reading game from Penn Station to Citi Field.</p>
+          <p class="disclaimer">This game is for play and experimentation only. It is not medical advice, diagnosis, or treatment. Stop playing if you feel discomfort.</p>
+        </div>
+        <div class="title-actions">
+          <button id="startGameButton" class="primary-action" type="button">Start Game</button>
+          <button data-screen="howToScreen" type="button">How to Play</button>
+          <button data-screen="settingsScreen" type="button">Settings</button>
+          <button data-screen="mapScreen" type="button">Stage Map</button>
+        </div>
+      </section>
+
+      <section id="howToScreen" class="screen" aria-labelledby="howToTitle">
+        <header class="screen-header">
+          <p class="kicker">How to play</p>
+          <h2 id="howToTitle">Read, Answer, Ride</h2>
+        </header>
+        <div class="info-panel">
+          <p>Each stage shows a short comedy scene. Alphabetic letters can be split into stable red and blue colors. Read the scene, answer one A/B/C/D question, then move on.</p>
+          <p>A wrong answer gives you a joke and sends you back to reread. A correct answer opens the next stage. There are no points, lives, timers, streaks, or medical claims.</p>
+          <p>Use the settings to switch to plain text, adjust text length, reduce glow, change font spacing, and tune the red/blue ratio.</p>
+        </div>
+        <div class="nav-row">
+          <button data-screen="titleScreen" type="button">Back</button>
+          <button data-screen="settingsScreen" class="primary-action" type="button">Open Settings</button>
+        </div>
+      </section>
+
+      <section id="settingsScreen" class="screen" aria-labelledby="settingsTitle">
+        <header class="screen-header">
+          <p class="kicker">Settings / calibration</p>
+          <h2 id="settingsTitle">Make the Subway Text Behave</h2>
+        </header>
+        <div class="settings-grid">
+          <label class="setting-card">Reading length
+            <select id="lengthSetting">
+              <option value="short">Short</option>
+              <option value="standard" selected>Standard</option>
+              <option value="long">Long</option>
+            </select>
+          </label>
+          <label class="setting-card">Red/blue ratio
+            <select id="ratioSetting">
+              <option value="balanced" selected>50/50</option>
+              <option value="moreRed">More red</option>
+              <option value="moreBlue">More blue</option>
+            </select>
+          </label>
+          <label class="setting-card">Font size <span id="fontSizeValue">20px</span>
+            <input id="fontSizeSetting" type="range" min="16" max="30" value="20">
+          </label>
+          <label class="setting-card">Letter spacing <span id="letterSpacingValue">1px</span>
+            <input id="letterSpacingSetting" type="range" min="0" max="5" value="1">
+          </label>
+          <label class="setting-card">Line spacing <span id="lineSpacingValue">1.65</span>
+            <input id="lineSpacingSetting" type="range" min="130" max="210" value="165">
+          </label>
+          <label class="setting-card">Volume <span id="volumeValue">45%</span>
+            <input id="volumeSetting" type="range" min="0" max="100" value="45">
+          </label>
+          <label class="toggle-card"><input id="plainTextSetting" type="checkbox"> Plain text mode</label>
+          <label class="toggle-card"><input id="reduceGlowSetting" type="checkbox"> Reduce glow</label>
+          <label class="toggle-card"><input id="standardFontSetting" type="checkbox"> Standard font</label>
+          <label class="toggle-card"><input id="highContrastSetting" type="checkbox"> High contrast</label>
+          <label class="toggle-card"><input id="muteSetting" type="checkbox"> Mute sounds</label>
+        </div>
+        <p class="disclaimer">This game is for play and experimentation only. It is not medical advice, diagnosis, or treatment. Stop playing if you feel discomfort.</p>
+        <div class="nav-row">
+          <button data-screen="titleScreen" type="button">Back</button>
+          <button data-screen="mapScreen" class="primary-action" type="button">Stage Map</button>
+        </div>
+      </section>
+
+      <section id="mapScreen" class="screen" aria-labelledby="mapTitle">
+        <header class="screen-header">
+          <p class="kicker">Stage map</p>
+          <h2 id="mapTitle">Penn Station to Citi Field</h2>
+          <p id="progressText" class="progress-text">Stage 1 of 10</p>
+        </header>
+        <div id="stageMap" class="stage-map" aria-label="Stage list"></div>
+        <div class="nav-row">
+          <button data-screen="titleScreen" type="button">Title</button>
+          <button id="continueButton" class="primary-action" type="button">Continue</button>
+        </div>
+      </section>
+
+      <section id="readingScreen" class="screen reading-screen" aria-labelledby="stageTitle">
+        <header class="play-header">
+          <div>
+            <p id="stageProgress" class="kicker">Stage 1 of 10</p>
+            <h2 id="stageTitle">Penn Station Awakening</h2>
+            <p id="nextStopText" class="next-stop">Next stop: Signage Doom</p>
+          </div>
+          <button id="openSettingsButton" type="button">Settings</button>
+        </header>
+        <pre id="asciiArt" class="ascii-art" aria-label="Scene ASCII art"></pre>
+        <article id="sceneText" class="scene-text" aria-label="Reading passage"></article>
+        <div class="sticky-controls">
+          <button id="rerollButton" type="button">Reroll Letter Colors</button>
+          <button id="paperButton" type="button">Reread Shuffle</button>
+          <button id="questionButton" class="primary-action" type="button">Answer Question</button>
+        </div>
+      </section>
+
+      <section id="questionScreen" class="screen" aria-labelledby="questionTitle">
+        <header class="screen-header">
+          <p id="questionProgress" class="kicker">Stage 1 of 10</p>
+          <h2 id="questionTitle">Question</h2>
+        </header>
+        <div class="question-panel">
+          <p id="questionText" class="question-text"></p>
+          <div id="answerList" class="answer-list"></div>
+        </div>
+        <div class="nav-row">
+          <button id="backToReadButton" type="button">Reread Scene</button>
+        </div>
+      </section>
+
+      <section id="correctScreen" class="screen feedback-screen" aria-labelledby="correctTitle">
+        <p class="kicker">Correct</p>
+        <h2 id="correctTitle">The meaning survived.</h2>
+        <p id="correctFeedback" class="feedback-copy"></p>
+        <button id="nextStageButton" class="primary-action" type="button">Next Stage</button>
+      </section>
+
+      <section id="wrongScreen" class="screen feedback-screen" aria-labelledby="wrongTitle">
+        <p class="kicker">Not quite</p>
+        <h2 id="wrongTitle">The train has not accepted that answer.</h2>
+        <p id="wrongFeedback" class="feedback-copy"></p>
+        <button id="tryAgainButton" class="primary-action" type="button">Reread and Try Again</button>
+      </section>
+
+      <section id="completionScreen" class="screen completion-screen" aria-labelledby="completionTitle">
+        <p class="kicker">Citi Field at last</p>
+        <h2 id="completionTitle">You reached Citi Field.</h2>
+        <div class="completion-copy">
+          <p>Candide is relieved.</p>
+          <p>Pangloss says the delays were educational.</p>
+          <p>Martin says this proves his point.</p>
+          <p>Cunegonde has already ordered food.</p>
+          <p>The Mets Fan nods solemnly.</p>
+          <p><strong>The letters were split. The meaning survived.</strong></p>
+        </div>
+        <div class="nav-row">
+          <button id="restartStoryButton" type="button">Restart Story</button>
+          <button data-screen="mapScreen" class="primary-action" type="button">Stage Map</button>
+        </div>
+      </section>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
