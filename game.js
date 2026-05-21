@@ -17,6 +17,9 @@ const DEFAULT_SETTINGS = {
   volume: 45
 };
 
+const VALID_LENGTHS = ["short", "standard", "long"];
+const VALID_RATIOS = ["balanced", "moreRed", "moreBlue"];
+
 const characterLabels = {
   narrator: "Narrator",
   candide: "Candide",
@@ -224,7 +227,7 @@ const stages = [
       makeQuestion("What is Flyer Guy trying to give them?", ["Flyers and free offers", "Baseball gloves", "Train keys", "Fresh socks"], 0, "No. He is pushing flyers and suspiciously free offers."),
       makeQuestion("What does Martin say about the free things?", ["All of them become expensive", "They are legally magic", "They improve the train", "They are from Queens"], 0, "Not quite. Martin says all free things become expensive."),
       makeQuestion("What does Cunegonde tell the group to do?", ["Keep walking", "Join the comedy show", "Trade shoes", "Ask for a receipt"], 0, "Nope. Cunegonde says keep walking."),
-      makeQuestion("Why is Candide suspicious of the clipboard?", ["It looks hungry", "It is glowing", "It says Citi Field", "It has a siren"], 0, "Not this one. In the long version, Candide says the clipboard looks hungry.")
+      makeQuestion("What does Candide wonder about the free things?", ["How many become expensive", "Whether they are from Queens", "Whether they improve the train", "How many fit in a backpack"], 0, "Nope. Candide is worried about how many free things become expensive.")
     ]
   },
   {
@@ -257,7 +260,7 @@ const stages = [
       makeQuestion("Where is the 7 train heading?", ["Queens", "Brooklyn", "New Jersey", "The moon"], 0, "Nope. The train is heading toward Queens, allegedly and with drama."),
       makeQuestion("What does the Mets Fan say about being there?", ["You are approaching emotionally", "You arrived yesterday", "You must swim", "You need a trumpet"], 0, "Not quite. The Mets Fan says they are approaching emotionally."),
       makeQuestion("What does Candide see that feels promising?", ["Sky", "A scoreboard", "A library", "A quiet couch"], 0, "No. Candide sees sky, which in transit counts as a miracle."),
-      makeQuestion("What does Cunegonde tell everyone to hold?", ["The pole", "A pretzel", "The map", "A sandwich"], 0, "Nope. Cunegonde says hold the pole.")
+      makeQuestion("What finally groans toward Queens?", ["The 7 train", "A ferry", "A taxi", "A bicycle"], 0, "Nope. The 7 train finally groans toward Queens.")
     ]
   },
   {
@@ -323,7 +326,7 @@ const stages = [
       makeQuestion("What mistake did the group make?", ["They took the wrong exit", "They boarded a boat", "They lost the Mets Fan", "They bought uniforms"], 0, "Nope. The mistake is the wrong exit, a proud New York tradition."),
       makeQuestion("What does Cunegonde say panic wastes?", ["Calories", "Tickets", "Maps", "Shoes"], 0, "Not that. Cunegonde says panic wastes calories."),
       makeQuestion("What does Candide wonder about the stadium?", ["Whether it moved", "Whether it is blue", "Whether it sells books", "Whether it has a basement"], 0, "No. Candide wonders if the stadium moved."),
-      makeQuestion("Who says wrong exits happen to rookies and philosophers?", ["The Mets Fan", "The Cop", "Flyer Guy", "The hot dog cart"], 0, "Nope. The Mets Fan gives the expert diagnosis.")
+      makeQuestion("What does Martin mention losing faith in?", ["Sidewalks", "Scoreboards", "Libraries", "Umbrellas"], 0, "Nope. Martin's faith in sidewalks is the thing taking damage.")
     ]
   },
   {
@@ -359,7 +362,7 @@ const stages = [
       makeQuestion("What finally rises ahead of the group?", ["Citi Field", "Penn Station", "A ferry", "A courtroom"], 0, "Not quite. Citi Field finally rises ahead, with cup holders and mercy."),
       makeQuestion("What has Cunegonde already done?", ["Ordered food", "Left the city", "Written a speech", "Fixed the train"], 0, "No. Cunegonde has already ordered food, because leadership has condiments."),
       makeQuestion("What does Pangloss say about the delays?", ["They were educational", "They were invisible", "They were delicious", "They were illegal fireworks"], 0, "Nope. Pangloss insists the delays were educational."),
-      makeQuestion("What survived despite the split letters?", ["The meaning", "A sandwich", "The OMNY reader", "The flyer"], 0, "Not that one. The letters split, but the meaning survived.")
+      makeQuestion("What does Candide say when they arrive?", ["We made it", "We missed it", "We should go home", "We need a ferry"], 0, "Not quite. Candide says, with great relief, that they made it.")
     ]
   }
 ];
@@ -436,13 +439,12 @@ class BlueRedEyeCandideGame {
 
     this.els.startGame.addEventListener("click", () => {
       this.unlockAudio();
-      this.playSound("start");
       this.loadStage(this.currentStageIndex);
     });
     this.els.continueButton.addEventListener("click", () => this.loadStage(this.currentStageIndex));
     this.els.openSettings.addEventListener("click", () => this.showScreen("settingsScreen"));
     this.els.reroll.addEventListener("click", () => {
-      this.colorCache.delete(this.currentStageIndex);
+      this.clearCurrentStageColorCache();
       this.renderScene();
     });
     this.els.paper.addEventListener("click", () => this.playSound("paper"));
@@ -479,11 +481,16 @@ class BlueRedEyeCandideGame {
 
   loadState() {
     const fallback = { furthestStageReached: 1, completedGame: false, lastPlayedDate: null };
-    return this.readJson(STORAGE_KEY, fallback);
+    const stored = this.readJson(STORAGE_KEY, fallback);
+    return {
+      furthestStageReached: this.clampNumber(stored.furthestStageReached, 1, stages.length, 1),
+      completedGame: Boolean(stored.completedGame),
+      lastPlayedDate: typeof stored.lastPlayedDate === "string" ? stored.lastPlayedDate : null
+    };
   }
 
   loadSettings() {
-    return { ...DEFAULT_SETTINGS, ...this.readJson(SETTINGS_KEY, {}) };
+    return this.normalizeSettings({ ...DEFAULT_SETTINGS, ...this.readJson(SETTINGS_KEY, {}) });
   }
 
   readJson(key, fallback) {
@@ -496,15 +503,23 @@ class BlueRedEyeCandideGame {
 
   saveState() {
     this.state.lastPlayedDate = new Date().toISOString();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+    this.writeJson(STORAGE_KEY, this.state);
   }
 
   saveSettings() {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings));
+    this.writeJson(SETTINGS_KEY, this.settings);
+  }
+
+  writeJson(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.warn("Unable to save local game data.", error);
+    }
   }
 
   updateSettingsFromForm() {
-    this.settings = {
+    this.settings = this.normalizeSettings({
       length: this.els.length.value,
       ratio: this.els.ratio.value,
       fontSize: Number(this.els.fontSize.value),
@@ -516,7 +531,7 @@ class BlueRedEyeCandideGame {
       standardFont: this.els.standardFont.checked,
       highContrast: this.els.highContrast.checked,
       muted: this.els.muted.checked
-    };
+    });
     this.applySettings();
     this.saveSettings();
     if (document.querySelector("#readingScreen").classList.contains("active")) this.renderScene();
@@ -549,6 +564,28 @@ class BlueRedEyeCandideGame {
     document.body.classList.toggle("high-contrast", this.settings.highContrast);
   }
 
+  normalizeSettings(settings) {
+    return {
+      length: VALID_LENGTHS.includes(settings.length) ? settings.length : DEFAULT_SETTINGS.length,
+      ratio: VALID_RATIOS.includes(settings.ratio) ? settings.ratio : DEFAULT_SETTINGS.ratio,
+      fontSize: this.clampNumber(settings.fontSize, 16, 30, DEFAULT_SETTINGS.fontSize),
+      letterSpacing: this.clampNumber(settings.letterSpacing, 0, 5, DEFAULT_SETTINGS.letterSpacing),
+      lineSpacing: this.clampNumber(settings.lineSpacing, 130, 210, DEFAULT_SETTINGS.lineSpacing),
+      volume: this.clampNumber(settings.volume, 0, 100, DEFAULT_SETTINGS.volume),
+      plainText: Boolean(settings.plainText),
+      reduceGlow: Boolean(settings.reduceGlow),
+      standardFont: Boolean(settings.standardFont),
+      highContrast: Boolean(settings.highContrast),
+      muted: Boolean(settings.muted)
+    };
+  }
+
+  clampNumber(value, min, max, fallback) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return fallback;
+    return Math.min(max, Math.max(min, number));
+  }
+
   showScreen(id) {
     this.screens.forEach((screen) => screen.classList.toggle("active", screen.id === id));
     if (id === "mapScreen") this.renderStageMap();
@@ -572,11 +609,11 @@ class BlueRedEyeCandideGame {
     });
   }
 
-  loadStage(index) {
+  loadStage(index, soundType = index === 0 ? "start" : "stage") {
     this.currentStageIndex = index;
     this.currentQuestion = this.pickQuestion(index);
     this.renderScene();
-    this.playSound(index === 0 ? "start" : "stage");
+    if (soundType) this.playSound(soundType);
     this.showScreen("readingScreen");
   }
 
@@ -628,6 +665,13 @@ class BlueRedEyeCandideGame {
     return colors;
   }
 
+  clearCurrentStageColorCache() {
+    const prefix = `${this.currentStageIndex}-${this.settings.length}-`;
+    for (const key of this.colorCache.keys()) {
+      if (key.startsWith(prefix)) this.colorCache.delete(key);
+    }
+  }
+
   pickQuestion(index) {
     const pool = stages[index].questions;
     return pool[Math.floor(Math.random() * pool.length)];
@@ -675,8 +719,7 @@ class BlueRedEyeCandideGame {
     this.currentStageIndex += 1;
     this.state.furthestStageReached = Math.max(this.state.furthestStageReached, this.currentStageIndex + 1);
     this.saveState();
-    this.playSound("train");
-    this.loadStage(this.currentStageIndex);
+    this.loadStage(this.currentStageIndex, "train");
   }
 
   restartStory() {
